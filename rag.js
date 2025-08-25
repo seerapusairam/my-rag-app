@@ -29,6 +29,30 @@ async function setupRag() {
     vectorStore = await MemoryVectorStore.fromDocuments(splitDocs, embeddings);
 
     console.log("In-memory vector store created successfully.");
+
+    const retriever = vectorStore.asRetriever({ k: 2 }); // this will take the top 2 results 
+    
+    //making the prompt to send to llm model
+    // context will take the documents we got in retriever
+    const prompt = ChatPromptTemplate.fromTemplate(`
+        Answer the user's question based only on the following context:
+        <context>
+        {context}
+        </context>
+
+        Question: {input}
+    `);
+
+    //combining - "question which user asked + the documents" and the ai model
+    const combineDocsChain = await createStuffDocumentsChain({ llm, prompt });
+
+    //stuff all docs + user question into prompt → call LLM
+    retrievalChain = await createRetrievalChain({
+        retriever,
+        combineDocsChain,
+    });
+    
+    console.log("Gemini RAG pipeline is ready!");
 }
 
 // Initialize the pipeline on startup
