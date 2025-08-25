@@ -1,0 +1,17 @@
+{
+  "name": "my-rag-app",
+  "version": "1.0.0",
+  "description": "A RAG application with Node.js and LangChain",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "@langchain/community": "^0.2.19",
+    "@langchain/google-genai": "^0.0.21",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "langchain": "^0.2.8"
+  }
+}
