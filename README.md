@@ -1,13 +1,15 @@
 # my-rag-app
 
-This project is a simple Retrieval-Augmented Generation (RAG) application built with Node.js, Express, and LangChain. It uses Google's Gemini models for embeddings and language generation.
+I have started this project cuz i'm pissed off looking for answer in textbook. i started small where i will gradually increases it from text to pdf and docs but as for now it will be from text. it was a simple RAG project where it will take the data and answers the questions users ask on that data. 
+
+i used nodejs genarally mostly of the ppl will use python but i good at node so i thought of trying with JS.
 
 ## Features
 
-- **Express Server**: Sets up a simple server with an `/ask` endpoint to handle questions.
-- **LangChain Integration**: Utilizes LangChain for document loading, text splitting, and creating a RAG pipeline.
-- **In-Memory Vector Store**: Uses an in-memory vector store for simplicity and ease of use.
-- **Google Gemini**: Leverages Google's `gemini-embedding-001` for creating embeddings and `gemini-1.5-flash` for generating answers.
+- **Express**: i have created a `/ask` route where user will send the question.
+- **LangChain**: Utilizes LangChain for document loading, text splitting, and creating a RAG pipeline.
+- **In-Memory Vector Store**: as of now i used this in memory which is not idealy but i try to change to chromeDB where we can store the result pretty long
+- **Google Gemini**: i used gemini for both embedding and llm. 
 
 ## Prerequisites
 
@@ -58,7 +60,7 @@ This project is a simple Retrieval-Augmented Generation (RAG) application built 
 ## How It Works
 
 1.  **Indexing**:
-    *   When the server starts, the `setupRagPipeline` function in `rag.js` is called.
+    *   When the server starts, the `setupRagPipeline` function in `setupRag.js` is called.
     *   It loads the text from `data.txt` using `TextLoader`.
     *   The text is split into smaller chunks using `RecursiveCharacterTextSplitter`.
     *   These chunks are then converted into vector embeddings using `GoogleGenerativeAIEmbeddings` (`gemini-embedding-001`).
@@ -66,7 +68,7 @@ This project is a simple Retrieval-Augmented Generation (RAG) application built 
 
 2.  **Retrieval and Generation**:
     *   The `/ask` endpoint in `app.js` receives a question.
-    *   The `askQuestion` function in `rag.js` is called with the user's question.
+    *   The `askQuestion` function in `setupRag.js` is called with the user's question.
     *   A retriever searches the `MemoryVectorStore` for the most relevant document chunks based on the question.
     *   The retrieved chunks and the original question are passed to a prompt template.
     *   The `ChatGoogleGenerativeAI` model (`gemini-1.5-flash`) generates an answer based on the provided context.

@@ -11,7 +11,7 @@ app.post('/ask', async (req, res) => {
     const { question } = req.body;
 
     if (!question) {
-        return res.status(400).json({ msg: 'Question is required.' });
+        return res.status(400).json({ msg: 'pls provide the question' });
     }
 
     try {
@@ -19,7 +19,7 @@ app.post('/ask', async (req, res) => {
         const ans = await askQuestion(question);
         res.json({ans});
     } catch (error) {
-        res.status(500).json({ msg: 'Failed to process the question' });
+        res.status(500).json({ msg: 'sorry, i cant process the question' });
     }
 });
 

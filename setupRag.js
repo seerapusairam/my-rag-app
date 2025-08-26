@@ -20,8 +20,8 @@ let retrievalChain;
 async function setupRag() {
     console.log("Setting up RAG with Gemini AI...");
     //load my text
-    const loader = new TextLoader("./data.txt"); // loader will take the file path and file name which we will use to load
-    const file = await loader.load(); // document object which has "pageContent-file data","metadata-like source","id"
+    const load = new TextLoader("./data.txt"); // loader will take the file path and file name which we will use to load
+    const file = await load.load(); // document object which has "pageContent-file data","metadata-like source","id"
 
     //split documents into chunks
     const split = new RecursiveCharacterTextSplitter({ // creating a 200 char chunk with 20-overlap so we wont loss any data
@@ -34,13 +34,13 @@ async function setupRag() {
     //right now im using in memory where the data will be deleted after i stopped the app
     vectorStore = await MemoryVectorStore.fromDocuments(splitDocs, embeddings);
 
-    console.log("In-memory vector store created successfully.");
+    //TODO: in future i'll add chromedb so we can store the results for long time
 
     const retriever = vectorStore.asRetriever({ k: 2 }); // this will take the top 2 results 
     
     //making the prompt to send to llm model
     // context will take the documents we got in retriever
-    const prompt = ChatPromptTemplate.fromTemplate(`
+    const aiPromp = ChatPromptTemplate.fromTemplate(`
         Answer the user's question based only on the following context:
         <context>
         {context}
@@ -50,7 +50,7 @@ async function setupRag() {
     `);
 
     //combining - "question which user asked + the top documents" and the ai model
-    const combineDocsChain = await createStuffDocumentsChain({ llm, prompt });
+    const combineDocsChain = await createStuffDocumentsChain({ llm, aiPromp });
 
     //stuff all docs + user question into prompt → call LLM
     retrievalChain = await createRetrievalChain({
@@ -63,7 +63,7 @@ async function setupRag() {
 
 export async function askQuestion(question) {
     if (!retrievalChain) {
-        throw new Error("RAG pipeline not initialized.");
+        throw new Error("I think RAG pipeline caugth an error");
     }
     const response = await retrievalChain.invoke({ input: question });// take the user question
     return response.answer; // extract the ans from the response
