@@ -2,6 +2,9 @@ import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from "@langchain
 import { TextLoader } from "langchain/document_loaders/fs/text"; // used to load the data
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter"; // used to split the data 
 import { MemoryVectorStore } from "langchain/vectorstores/memory"; //in-memory vector store
+import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { createRetrievalChain } from "langchain/chains/retrieval";
 import 'dotenv/config';
 // --- Initialize the Gemini models --- // this will search for the API key in .env file
 const embeddings = new GoogleGenerativeAIEmbeddings({ 
@@ -10,6 +13,9 @@ const embeddings = new GoogleGenerativeAIEmbeddings({
 const llm = new ChatGoogleGenerativeAI({
     modelName: "gemini-1.5-flash",
 });
+
+let vectorStore;
+let retrievalChain;
 
 async function setupRag() {
     console.log("Setting up RAG with Gemini AI...");
@@ -53,6 +59,16 @@ async function setupRag() {
     });
     
     console.log("Gemini RAG pipeline is ready!");
+}
+
+export async function askQuestion(question) {
+    if (!retrievalChain) {
+        throw new Error("RAG pipeline not initialized.");
+    }
+    const response = await retrievalChain.invoke({ input: question });// take the user question
+    console.log(response)
+    return response.answer;
+
 }
 
 // Initialize the pipeline on startup
