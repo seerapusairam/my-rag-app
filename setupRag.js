@@ -49,7 +49,7 @@ async function setupRag() {
         Question: {input}
     `);
 
-    //combining - "question which user asked + the documents" and the ai model
+    //combining - "question which user asked + the top documents" and the ai model
     const combineDocsChain = await createStuffDocumentsChain({ llm, prompt });
 
     //stuff all docs + user question into prompt → call LLM
@@ -66,8 +66,7 @@ export async function askQuestion(question) {
         throw new Error("RAG pipeline not initialized.");
     }
     const response = await retrievalChain.invoke({ input: question });// take the user question
-    console.log(response)
-    return response.answer;
+    return response.answer; // extract the ans from the response
 
 }
 
