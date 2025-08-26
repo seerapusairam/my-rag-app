@@ -31,6 +31,7 @@ This project is a simple Retrieval-Augmented Generation (RAG) application built 
    Create a `.env` file in the root of the project and add your Google AI API key:
    ```
    GOOGLE_API_KEY=your_google_api_key
+   PORT=<port number>
    ```
 
 4. **Add your data:**
@@ -42,7 +43,7 @@ This project is a simple Retrieval-Augmented Generation (RAG) application built 
    ```bash
    npm start
    ```
-   The server will be running at `http://localhost:3000`.
+   The server will be running at `http://localhost:<PORT>`.
 
 2. **Ask a question:**
    You can use a tool like `curl` or Postman to send a POST request to the `/ask` endpoint.
@@ -79,5 +80,5 @@ This project is a simple Retrieval-Augmented Generation (RAG) application built 
 ├── rag.js              # RAG pipeline logic
 ├── data.txt            # Your custom data
 ├── package.json        # Project dependencies and scripts
-├── .env                # Environment variables (contains API key)
+├── .env                # Environment variables (contains API key and PORT)
 └── README.md           # This file
