@@ -2,13 +2,13 @@
 
 I have started this project cuz i'm pissed off looking for answer in textbook. i started small where i will gradually increases it from text to pdf and docs but as for now it will be from text. it was a simple RAG project where it will take the data and answers the questions users ask on that data. 
 
-i used nodejs genarally mostly of the ppl will use python but i good at node so i thought of trying with JS.
+i used nodejs genarally mostly of the people will use python but i'm good at node so i thought of trying with JS.
 
 ## Features
 
 - **Express**: i have created a `/ask` route where user will send the question.
 - **LangChain**: Utilizes LangChain for document loading, text splitting, and creating a RAG pipeline.
-- **In-Memory Vector Store**: as of now i used this in memory which is not idealy but i try to change to chromeDB where we can store the result pretty long
+- **In-Memory Vector Store**: as of now i used this in memory which is not idealy but i'll try to change to chromeDB where we can store the result pretty long time.
 - **Google Gemini**: i used gemini for both embedding and llm. 
 
 ## Prerequisites
