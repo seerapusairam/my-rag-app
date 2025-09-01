@@ -50,7 +50,12 @@ async function setupRag() {
     `);
 
     //combining - "question which user asked + the top documents" and the ai model
-    const combineDocsChain = await createStuffDocumentsChain({ llm, aiPromp });
+    const combineDocsChain = await createStuffDocumentsChain(
+        { 
+            llm:llm,
+            prompt: aiPromp
+        }
+    );
 
     //stuff all docs + user question into prompt → call LLM
     retrievalChain = await createRetrievalChain({
