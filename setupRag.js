@@ -1,7 +1,7 @@
 import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from "@langchain/google-genai"; // used to get the ai models
 import { TextLoader } from "langchain/document_loaders/fs/text"; // used to load the data
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter"; // used to split the data 
-import { MemoryVectorStore } from "langchain/vectorstores/memory"; //in-memory vector store
+import { CloudClient } from "chromadb"; // imported client to connect chormadb cloud
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { createRetrievalChain } from "langchain/chains/retrieval";
@@ -14,8 +14,13 @@ const llm = new ChatGoogleGenerativeAI({
     modelName: "gemini-1.5-flash",
 });
 
-let vectorStore;
 let retrievalChain;
+
+const client = new CloudClient({
+  apiKey: process.env.CHROMA_API_KEY,
+  tenant: process.env.CHROMA_TENANT,
+  database: process.env.CHROMA_DATABASE
+});
 
 async function setupRag() {
     console.log("Setting up RAG with Gemini AI...");
@@ -54,8 +59,7 @@ async function setupRag() {
         { 
             llm:llm,
             prompt: aiPromp
-        }
-    );
+        });
 
     //stuff all docs + user question into prompt → call LLM
     retrievalChain = await createRetrievalChain({
@@ -68,7 +72,7 @@ async function setupRag() {
 
 export async function askQuestion(question) {
     if (!retrievalChain) {
-        throw new Error("I think RAG pipeline caugth an error");
+        throw new Error("I think RAG pipeline caught an error");
     }
     const response = await retrievalChain.invoke({ input: question });// take the user question
     return response.answer; // extract the ans from the response
