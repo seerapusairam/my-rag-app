@@ -22,6 +22,13 @@ const client = new CloudClient({
   database: process.env.CHROMA_DATABASE
 });
 
+const collection = await client.getOrCreateCollection({
+    name: process.env.CHROMA_DATABASE,
+    embeddingFunction: async (texts) => {
+    return embeddings.embedDocuments(texts); // we are giving our embedding model google
+  }
+});
+
 async function setupRag() {
     console.log("Setting up RAG with Gemini AI...");
     //load my text
@@ -35,13 +42,10 @@ async function setupRag() {
     });
     const splitDocs = await split.splitDocuments(file); //split the text file into induvidual document object 
 
-    //in future i'll add chromedb so we can store the results for long time 
-    //right now im using in memory where the data will be deleted after i stopped the app
-    vectorStore = await MemoryVectorStore.fromDocuments(splitDocs, embeddings);
-
-    //TODO: in future i'll add chromedb so we can store the results for long time
-
-    const retriever = vectorStore.asRetriever({ k: 2 }); // this will take the top 2 results 
+    
+    const texts = splitDocs.map(d => d.pageContent); // pageContent has the data
+    const vectors = await embeddings.embedDocuments(texts); // contains embedded values of the data in chunks ex: [0.001,0.034],[0.0121,0.1231]
+    console.log(vectors) 
     
     //making the prompt to send to llm model
     // context will take the documents we got in retriever
