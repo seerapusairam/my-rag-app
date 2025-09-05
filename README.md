@@ -14,8 +14,8 @@ i used nodejs genarally mostly of the people will use python but i'm good at nod
 ## Prerequisites
 
 - Node.js (v18 or higher)
-- A Google AI API key
-- ChromaDB Cloud credentials (API Key, Tenant, Database Name)
+- A Google AI API key - https://aistudio.google.com/
+- ChromaDB Cloud credentials (API Key, Tenant, Database Name) - https://www.trychroma.com/
 
 ## Installation
 
