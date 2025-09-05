@@ -6,15 +6,16 @@ i used nodejs genarally mostly of the people will use python but i'm good at nod
 
 ## Features
 
-- **Express**: i have created a `/ask` route where user will send the question.
+- **Express**: The application uses Express.js with a structured routing system (`router/askRouter.js` and `controller/appController.js`) to handle the `/ask` endpoint.
 - **LangChain**: Utilizes LangChain for document loading, text splitting, and creating a RAG pipeline.
-- **In-Memory Vector Store**: as of now i used this in memory which is not idealy but i'll try to change to chromeDB where we can store the result pretty long time.
-- **Google Gemini**: i used gemini for both embedding and llm. 
+- **ChromaDB Vector Store**: Replaced the in-memory store with ChromaDB for persistent storage of vector embeddings.
+- **Google Gemini**: Uses Gemini for both embedding generation (`gemini-embedding-001`) and large language model (`gemini-1.5-flash`).
 
 ## Prerequisites
 
 - Node.js (v18 or higher)
 - A Google AI API key
+- ChromaDB Cloud credentials (API Key, Tenant, Database Name)
 
 ## Installation
 
@@ -30,10 +31,13 @@ i used nodejs genarally mostly of the people will use python but i'm good at nod
    ```
 
 3. **Set up your environment variables:**
-   Create a `.env` file in the root of the project and add your Google AI API key:
+   Create a `.env` file in the root of the project and add your Google AI API key and ChromaDB credentials:
    ```
    GOOGLE_API_KEY=your_google_api_key
    PORT=<port number>
+   CHROMA_API_KEY=your_chroma_api_key
+   CHROMA_TENANT=your_chroma_tenant
+   CHROMA_DATABASE=your_chroma_database_name
    ```
 
 4. **Add your data:**
@@ -60,16 +64,16 @@ i used nodejs genarally mostly of the people will use python but i'm good at nod
 ## How It Works
 
 1.  **Indexing**:
-    *   When the server starts, the `setupRagPipeline` function in `setupRag.js` is called.
+    *   When the server starts, the `setupRag` function in `setupRag.js` is called.
     *   It loads the text from `data.txt` using `TextLoader`.
     *   The text is split into smaller chunks using `RecursiveCharacterTextSplitter`.
     *   These chunks are then converted into vector embeddings using `GoogleGenerativeAIEmbeddings` (`gemini-embedding-001`).
-    *   The embeddings are stored in an in-memory `MemoryVectorStore`.
+    *   The embeddings are then added to a ChromaDB collection.
 
 2.  **Retrieval and Generation**:
-    *   The `/ask` endpoint in `app.js` receives a question.
-    *   The `askQuestion` function in `setupRag.js` is called with the user's question.
-    *   A retriever searches the `MemoryVectorStore` for the most relevant document chunks based on the question.
+    *   The `/ask` endpoint (handled by `router/askRouter.js` and `controller/appController.js`) receives a question.
+    *   The `askController` function calls `askQuestion` from `setupRag.js` with the user's question.
+    *   A retriever queries the ChromaDB collection for the most relevant document chunks based on the question.
     *   The retrieved chunks and the original question are passed to a prompt template.
     *   The `ChatGoogleGenerativeAI` model (`gemini-1.5-flash`) generates an answer based on the provided context.
     *   The answer is then sent back as a JSON response.
@@ -78,9 +82,13 @@ i used nodejs genarally mostly of the people will use python but i'm good at nod
 
 ```
 .
-├── app.js              # Express server setup
-├── rag.js              # RAG pipeline logic
+├── app.js              # Main Express server setup
+├── controller/         # Contains controller logic
+│   └── appController.js  # Handles the /ask endpoint logic
 ├── data.txt            # Your custom data
 ├── package.json        # Project dependencies and scripts
-├── .env                # Environment variables (contains API key and PORT)
-└── README.md           # This file
+├── .env                # Environment variables (contains API keys and PORT)
+├── README.md           # This file
+├── router/             # Contains route definitions
+│   └── askRouter.js    # Defines the /ask route
+└── setupRag.js         # RAG pipeline logic and ChromaDB integration
