@@ -55,6 +55,20 @@ async function setupRag() {
             return { source: JSON.stringify(d.metadata || {}) }; // take the meta data
         }),
     });
+
+    const retriever = {
+        getRelevantDocuments: async (query) => {
+        const queryVector = await embeddings.embedQuery(query); // take the query we asked and conver to embedded
+        const result = await collection.query({ // funtion to feach the top results
+            query_embeddings: [queryVector], // passing the query so it will find the similral vector
+            n_results: 2,                   // getting the top results
+        });
+        return result.documents[0].map((text, i) => ({ // formating the result
+            pageContent: text,                      // get the text
+            metadata: result.metadatas[0][i],       // and the text metadata
+        }));
+        }
+    };
     
     //making the prompt to send to llm model
     // context will take the documents we got in retriever
