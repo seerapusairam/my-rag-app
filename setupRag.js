@@ -45,7 +45,16 @@ async function setupRag() {
     
     const texts = splitDocs.map(d => d.pageContent); // pageContent has the data
     const vectors = await embeddings.embedDocuments(texts); // contains embedded values of the data in chunks ex: [0.001,0.034],[0.0121,0.1231]
-    console.log(vectors) 
+
+    //add the docs to chromadb
+    await collection.add({
+        ids: splitDocs.map((_, i) => `${i}`), // count the docs and give the count number
+        embeddings: vectors, // [0.123, 0.987, ...]
+        documents: texts, // doc text format
+        metadatas: splitDocs.map(d => {
+            return { source: JSON.stringify(d.metadata || {}) }; // take the meta data
+        }),
+    });
     
     //making the prompt to send to llm model
     // context will take the documents we got in retriever
