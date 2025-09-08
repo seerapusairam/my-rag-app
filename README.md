@@ -1,4 +1,4 @@
-# my-rag-app
+# RAG Q&A Application
 
 I have started this project cuz i'm pissed off looking for answer in textbook. i started small where i will gradually increases it from text to pdf and docs but as for now it will be from text. it was a simple RAG project where it will take the data and answers the questions users ask on that data. 
 
