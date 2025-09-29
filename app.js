@@ -10,7 +10,7 @@ app.use(express.json());
 
 app.use('/ask', router);
 
-const startServer = async () => {
+const start = async () => {
     await setupRag();
     
     app.listen(port, () => {
@@ -18,4 +18,4 @@ const startServer = async () => {
     });
 }
 
-startServer();
+start();
