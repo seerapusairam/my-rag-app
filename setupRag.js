@@ -1,79 +1,29 @@
-import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from "@langchain/google-genai"; // used to get the ai models
-import { TextLoader } from "langchain/document_loaders/fs/text"; // used to load the data
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter"; // used to split the data 
-import { CloudClient } from "chromadb"; // imported client to connect chormadb cloud
-import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { createRetrievalChain } from "langchain/chains/retrieval";
-import 'dotenv/config';
-// --- Initialize the Gemini models --- // this will search for the API key in .env file
-const embeddings = new GoogleGenerativeAIEmbeddings({ 
-    modelName: "gemini-embedding-001",
-});
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai"; // Imports Google's Generative AI models for chat.
+import { createStuffDocumentsChain } from "langchain/chains/combine_documents"; // Imports a chain for combining documents.
+import { ChatPromptTemplate } from "@langchain/core/prompts"; // Imports a template for chat prompts.
+import { createRetrievalChain } from "langchain/chains/retrieval"; // Imports a chain for document retrieval.
+import { RunnableLambda } from "@langchain/core/runnables"; // Imports a utility to create runnable lambda functions.
+import { customRetriever } from './setupData.js'; // Imports the custom retriever from setupData.js
+
+// --- Initialize the Gemini models --- // This section initializes the AI models from Google Gemini.
 const llm = new ChatGoogleGenerativeAI({
-    modelName: "gemini-1.5-flash",
+    modelName: "gemini-2.5-flash", // Specifies the Gemini model for chat interactions, chosen for its stability and performance.
 });
 
-let retrievalChain;
+let retrievalChain; // Declares a variable to hold the retrieval chain, which will be initialized later.
 
-const client = new CloudClient({
-  apiKey: process.env.CHROMA_API_KEY,
-  tenant: process.env.CHROMA_TENANT,
-  database: process.env.CHROMA_DATABASE
-});
-
-const collection = await client.getOrCreateCollection({
-    name: process.env.CHROMA_DATABASE,
-    embeddingFunction: async (texts) => {
-    return embeddings.embedDocuments(texts); // we are giving our embedding model google
-  }
-});
-
-async function setupRag() {
-    console.log("Setting up RAG with Gemini AI...");
-    //load my text
-    const load = new TextLoader("./data.txt"); // loader will take the file path and file name which we will use to load
-    const file = await load.load(); // document object which has "pageContent-file data","metadata-like source","id"
-
-    //split documents into chunks
-    const split = new RecursiveCharacterTextSplitter({ // creating a 200 char chunk with 20-overlap so we wont loss any data
-        chunkSize: 200,
-        chunkOverlap: 20,
-    });
-    const splitDocs = await split.splitDocuments(file); //split the text file into induvidual document object 
-
-    
-    const texts = splitDocs.map(d => d.pageContent); // pageContent has the data
-    const vectors = await embeddings.embedDocuments(texts); // contains embedded values of the data in chunks ex: [0.001,0.034],[0.0121,0.1231]
-
-    //add the docs to chromadb
-    await collection.add({
-        ids: splitDocs.map((_, i) => `${i}`), // count the docs and give the count number
-        embeddings: vectors, // [0.123, 0.987, ...]
-        documents: texts, // doc text format
-        metadatas: splitDocs.map(d => {
-            return { source: JSON.stringify(d.metadata || {}) }; // take the meta data
-        }),
+// Sets up the Retrieval-Augmented Generation (RAG) pipeline with Gemini AI.
+export async function setupRag() {
+    // Wraps the custom retriever in a RunnableLambda for use in Langchain chains.
+    const retriever = RunnableLambda.from(customRetriever).withConfig({
+        runName: "CustomRetriever",
     });
 
-    const retriever = {
-        getRelevantDocuments: async (query) => {
-        const queryVector = await embeddings.embedQuery(query); // take the query we asked and conver to embedded
-        const result = await collection.query({ // funtion to feach the top results
-            query_embeddings: [queryVector], // passing the query so it will find the similral vector
-            n_results: 2,                   // getting the top results
-        });
-        return result.documents[0].map((text, i) => ({ // formating the result
-            pageContent: text,                      // get the text
-            metadata: result.metadatas[0][i],       // and the text metadata
-        }));
-        }
-    };
-    
-    //making the prompt to send to llm model
-    // context will take the documents we got in retriever
+    // Defines the prompt template to be sent to the LLM model.
+    // The context will be populated with documents retrieved by the retriever.
     const aiPromp = ChatPromptTemplate.fromTemplate(`
         Answer the user's question based only on the following context:
+        If the context does not contain the answer, respond with "I don't know" or "The answer is not available in the provided documents".
         <context>
         {context}
         </context>
@@ -81,30 +31,31 @@ async function setupRag() {
         Question: {input}
     `);
 
-    //combining - "question which user asked + the top documents" and the ai model
+    // Creates a chain that combines the user's question with the retrieved documents and sends it to the AI model.
     const combineDocsChain = await createStuffDocumentsChain(
         { 
-            llm:llm,
-            prompt: aiPromp
+            llm, // The large language model to use.
+            prompt: aiPromp // The prompt template for the LLM.
         });
-
-    //stuff all docs + user question into prompt → call LLM
+    
+    // Creates the main retrieval chain, which orchestrates document retrieval and combines them with the LLM.
     retrievalChain = await createRetrievalChain({
-        retriever,
-        combineDocsChain,
+        retriever, // The document retriever.
+        combineDocsChain, // The chain for combining documents and prompting the LLM.
     });
     
-    console.log("Gemini RAG pipeline is ready!");
 }
 
+/**
+ * Asks a question using the configured RAG pipeline.
+ * @param {string} question - The user's question.
+ * @returns {string} The answer generated by the RAG pipeline.
+ * @throws {Error} If the RAG pipeline has not been set up yet.
+ */
 export async function askQuestion(question) {
     if (!retrievalChain) {
-        throw new Error("I think RAG pipeline caught an error");
+        throw new Error("RAG pipeline caught an error"); // Throws an error if the retrieval chain is not initialized.
     }
-    const response = await retrievalChain.invoke({ input: question });// take the user question
-    return response.answer; // extract the ans from the response
-
+    const response = await retrievalChain.invoke({ input: question });// Invokes the retrieval chain with the user's question.
+    return response.answer; // Extracts and returns the answer from the RAG response.
 }
-
-// Initialize the pipeline on startup
-setupRag();
