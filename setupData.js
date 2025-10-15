@@ -1,5 +1,5 @@
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai"; // Imports Google's Generative AI models for embeddings.
-import { TextLoader } from "langchain/document_loaders/fs/text"; // Imports a loader for text files.
+import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf"; // Imports a loader for PDF files.
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter"; // Imports a utility to split text into smaller chunks.
 import { CloudClient } from "chromadb"; // Imports the client to connect to ChromaDB cloud.
 import { Document } from "langchain/document"; // Imports the Document class for handling text content and metadata.
@@ -34,9 +34,9 @@ export async function setupData() {
         }
     });
 
-    // Load text data from the 'data.txt' file.
-    const load = new TextLoader("./data.txt"); // Initialize a TextLoader to read from 'data.txt'.
-    const file = await load.load(); // Load the content of the text file.
+    // Load PDF data from the 'data.pdf' file.
+    const loader = new PDFLoader("./data.pdf"); // Initialize a PDFLoader to read from 'data.pdf'.
+    const file = await loader.load(); // Load the content of the PDF file.
 
     // Split the loaded documents into smaller chunks.
     const split = new RecursiveCharacterTextSplitter({ // Configure the text splitter.
