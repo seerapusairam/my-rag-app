@@ -8,6 +8,7 @@ i used nodejs genarally mostly of the people will use python but i'm good at nod
 
 - **Express**: The application uses Express.js with a structured routing system (`router/askRouter.js` and `controller/appController.js`) to handle the `/ask` endpoint.
 - **LangChain**: Utilizes LangChain for document loading, text splitting, and creating a RAG pipeline.
+- **PDF Parsing**: Employs `pdf-parse` (via `@langchain/community/document_loaders/fs/pdf`) for robust PDF document loading.
 - **ChromaDB Vector Store**: Replaced the in-memory store with ChromaDB for persistent storage of vector embeddings.
 - **Google Gemini**: Uses Gemini for both embedding generation (`gemini-embedding-001`) and large language model (`gemini-1.5-flash`).
 
@@ -31,7 +32,7 @@ i used nodejs genarally mostly of the people will use python but i'm good at nod
    ```
 
 3. **Set up your environment variables:**
-   Create a `.env` file in the root of the project and add your Google AI API key and ChromaDB credentials:
+   Create a `.env` file in the root of the project and add your Google AI API key and ChromaDB credentials. If `PORT` is not specified, the application will default to port `3000`.
    ```
    GOOGLE_API_KEY=your_google_api_key
    PORT=<port number>
@@ -41,7 +42,7 @@ i used nodejs genarally mostly of the people will use python but i'm good at nod
    ```
 
 4. **Add your data:**
-   Place the text data you want to query in the `data.txt` file.
+   Place the PDF data you want to query in the `data.pdf` file in the project root directory.
 
 ## Usage
 
@@ -64,16 +65,17 @@ i used nodejs genarally mostly of the people will use python but i'm good at nod
 ## How It Works
 
 1.  **Indexing**:
-    *   When the server starts, the `setupRag` function in `setupRag.js` is called.
-    *   It loads the text from `data.txt` using `TextLoader`.
-    *   The text is split into smaller chunks using `RecursiveCharacterTextSplitter`.
+    *   When the server starts, the `setupData` function in `setupData.js` is called.
+    *   It loads the PDF from `data.pdf` using `PDFLoader`.
+    *   The PDF content is split into smaller chunks using `RecursiveCharacterTextSplitter`.
     *   These chunks are then converted into vector embeddings using `GoogleGenerativeAIEmbeddings` (`gemini-embedding-001`).
     *   The embeddings are then added to a ChromaDB collection.
+    *   The `setupRag` function in `setupRag.js` then initializes the RAG pipeline with the custom retriever from `setupData.js`.
 
 2.  **Retrieval and Generation**:
     *   The `/ask` endpoint (handled by `router/askRouter.js` and `controller/appController.js`) receives a question.
     *   The `askController` function calls `askQuestion` from `setupRag.js` with the user's question.
-    *   A retriever queries the ChromaDB collection for the most relevant document chunks based on the question.
+    *   A custom retriever (defined in `setupData.js`) queries the ChromaDB collection for the most relevant document chunks based on the question.
     *   The retrieved chunks and the original question are passed to a prompt template.
     *   The `ChatGoogleGenerativeAI` model (`gemini-1.5-flash`) generates an answer based on the provided context.
     *   The answer is then sent back as a JSON response.
@@ -85,10 +87,11 @@ i used nodejs genarally mostly of the people will use python but i'm good at nod
 ├── app.js              # Main Express server setup
 ├── controller/         # Contains controller logic
 │   └── appController.js  # Handles the /ask endpoint logic
-├── data.txt            # Your custom data
+├── data.pdf            # Your custom PDF data
 ├── package.json        # Project dependencies and scripts
 ├── .env                # Environment variables (contains API keys and PORT)
 ├── README.md           # This file
 ├── router/             # Contains route definitions
 │   └── askRouter.js    # Defines the /ask route
-└── setupRag.js         # RAG pipeline logic and ChromaDB integration
+├── setupData.js        # Data loading, splitting, embedding, and ChromaDB integration
+└── setupRag.js         # RAG pipeline logic and custom retriever integration
